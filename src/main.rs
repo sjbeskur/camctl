@@ -39,24 +39,32 @@ pub fn capture(camera_number: i32) -> Result<(), Box<dyn std::error::Error>>{
     println!("Initializing Camera!");
     let mut camera = arducam_mipicamera::Camera::init(None).unwrap();
     //camera.set_lens_table();
+
+
     camera.set_mode(9);
     //resetGlobalParameter();
 
+    // V4L2_CID_FOCUS_ABSOLUTE = 10094858
+    //println!("reseting control {} = {}", "V4L2_CID_FOCUS_ABSOLUTE", 10094858 );
+    camera.reset_control(10094858);
+
     //camera.set_control( V4L2_CID_FOCUS_ABSOLUTE, globalParam.focusVal )
     camera.set_control( 10094858, 0 );
-
+    // ((0x009a0000 | 0x900)+10)
     //camera.set_control( V4L2_CID_EXPOSURE, globalParam.exposureVal )
     camera.set_control( 9963793, 1758 );
-
+    
     let rslt = camera.set_resolution(3840,1080).unwrap();
     println!("resolution: {:?}", rslt);
 
-    println!("setting auto exposure");
-    camera.arducam_software_auto_exposure(true).unwrap();
+    //println!("setting auto exposure");
+    //camera.arducam_software_auto_exposure(true).unwrap();
 
-    println!("setting whitebalance");
-    camera.arducam_software_auto_white_balance(true).unwrap();
+    //println!("setting whitebalance");
+    //camera.arducam_software_auto_white_balance(true).unwrap();
 
+    println!("setting awb stuff");
+    camera.arducam_manual_set_awb_compensation(100,100);
 
     // let mode = camera.get_mode().unwrap();
     // let ctl = camera.get_control(2).unwrap();
@@ -67,7 +75,7 @@ pub fn capture(camera_number: i32) -> Result<(), Box<dyn std::error::Error>>{
 
     // JPEG quality setting (1-100)
     println!("\nCapturing Image:");
-    let buffer = camera.capture(5000, Encoding::Jpeg, 100).unwrap();
+    let buffer = camera.capture(5000, Encoding::Jpeg, 50).unwrap();
 
     let bytes = buffer.data();
     let img2 = ImageReader::new(Cursor::new(bytes))
@@ -75,7 +83,7 @@ pub fn capture(camera_number: i32) -> Result<(), Box<dyn std::error::Error>>{
         .decode()?;
 
 
-    img2.save("stereo_capture.png")?;
+    img2.save("stereo_capture.jpg")?;
 
     Ok(())
 
